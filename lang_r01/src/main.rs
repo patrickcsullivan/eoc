@@ -20,11 +20,11 @@ fn main() {
     );
     let prog = Program::new(expr);
 
-    // use ast::ProgramFolder;
-    // let mut ctx = uniquify::ProgramUniquifier {};
-    // let prog2 = ctx.fold(prog);
+    use ast::ProgramFolder;
+    let mut ctx = uniquify::ProgramUniquifier {};
+    let prog2 = ctx.fold(prog);
 
-    interp::interp(&prog);
+    interp::interp(&prog2);
 }
 
 // struct Ctx {

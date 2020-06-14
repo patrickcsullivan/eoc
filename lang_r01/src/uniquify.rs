@@ -5,8 +5,8 @@ use std::collections::HashMap;
 struct ExprUniquifier {
     counter: u64,
 
-    /// Maps variable names from source code to generated, uniqued variable
-    /// names.
+    /// Maps variable names from source code to generated uniqued variable
+    /// names. Contains only variables that are currently in scope.
     sym_table: HashMap<Box<Symbol>, Box<Symbol>>,
 }
 
@@ -32,9 +32,32 @@ impl ExprFolder for ExprUniquifier {
     }
 
     fn fold_let(&mut self, sym: Box<Symbol>, e: Box<Expr>, body: Box<Expr>) -> Box<Expr> {
+        // Fold the value expression first.
+        let folded_val = self.fold(e);
+
+        // If the new let symbol shadows an existing variable then hold on to
+        // the existing unique symbol for that variable.
+        let old_unq_sym = self.sym_table.remove(&sym);
+
+        // Create a new unique symbol for the symbol in the let.
         let gen = self.new_sym();
-        self.sym_table.insert(sym, gen.clone());
-        Box::new(Expr::Let(gen, self.fold(e), self.fold(body)))
+        self.sym_table.insert(sym.clone(), gen.clone());
+
+        // Fold the body expression with the new unique symbol in the symbol
+        // table.
+        let folded_body = self.fold(body);
+
+        if let Some(old_unq_sym) = old_unq_sym {
+            // Put the unique symbol for the shadowed variable back in the
+            // symbol table.
+            self.sym_table.insert(sym, old_unq_sym);
+        } else {
+            // Remove the symbol from the symbol table since it will be out of
+            // scope for other parts of the AST.
+            self.sym_table.remove(&sym);
+        }
+
+        Box::new(Expr::Let(gen, folded_val, folded_body))
     }
 }
 
@@ -46,66 +69,3 @@ impl ProgramFolder for ProgramUniquifier {
         Program::new(ctx.fold(p.expr))
     }
 }
-//
-// pub struct Ctx {
-//     counter: u64,
-//     sym_table: HashMap<Symbol, Symbol>,
-// }
-
-// impl Ctx {
-//     const COUNTER_START: u64 = 12345;
-
-//     /// Returns a new Ctx.
-//     pub fn new() -> Ctx {
-//         Ctx {
-//             counter: Ctx::COUNTER_START,
-//             sym_table: HashMap::new(),
-//         }
-//     }
-
-//     /// Returns `true` if the symbol table contains the given source symbol.
-//     pub fn contains_src(&self, sym: &Symbol) -> bool {
-//         self.sym_table.contains_key(sym)
-//     }
-
-//     /// Creates a generated symbol for the source symbol and inserts a clone of
-//     /// the symbol into the symbol table
-//     pub fn insert_sym(&mut self, sym: &Symbol) -> &Symbol {
-//         if self.sym_table.get(sym).is_none() {
-//             self.counter += 1;
-//             let gen = Symbol {
-//                 Value: format!("v{}", self.counter),
-//             };
-//             self.sym_table.insert(sym.clone(), gen);
-//         }
-
-//         self.get_gen(&sym).unwrap()
-//     }
-
-//     /// Returns the generated symbol that is associated with the given source
-//     /// symbol.
-//     pub fn get_gen(&self, sym: &Symbol) -> Option<&Symbol> {
-//         self.sym_table.get(sym)
-//     }
-// }
-
-// pub fn uniquify(p: Program) {
-//     let mut ctx = Ctx::new();
-//     uniquify_exper(&mut ctx, p.Expr);
-// }
-
-// fn uniquify_exper(ctx: &mut Ctx, expr: Box<Expr>) -> Box<Expr> {
-//     match *expr {
-//         Expr::Var(sym) => {
-//             let gen = ctx.get_gen(&sym).expect("undeclared variable");
-//             Box::new(Expr::Var(gen.clone()))
-//         }
-//         Expr::Let(sym, expr, body) => {
-//             let gen = ctx.insert_sym(&sym);
-//             let expr = uniquify_exper(ctx, expr);
-//             let body = uniquify_exper(ctx, body);
-//             Box::new(Expr::Let(gen.clone(), expr, body))
-//         }
-//         _ => expr,
-//     }
-// }
