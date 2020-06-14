@@ -1,8 +1,8 @@
-use super::ast::{Expr, Program, Var};
+use super::ast::{Expr, Program, Symbol};
 use std::collections::HashMap;
 
 struct Env<'a> {
-    vars: HashMap<&'a Var, &'a Expr>,
+    vars: HashMap<&'a Symbol, &'a Expr>,
 }
 
 impl<'a> Env<'a> {
@@ -12,11 +12,11 @@ impl<'a> Env<'a> {
         }
     }
 
-    fn set(&mut self, var: &'a Var, expr: &'a Expr) {
+    fn set(&mut self, var: &'a Symbol, expr: &'a Expr) {
         self.vars.insert(var, expr);
     }
 
-    fn get(&self, var: &Var) -> Option<&'a Expr> {
+    fn get(&self, var: &Symbol) -> Option<&'a Expr> {
         self.vars.get(var).map(|&v| v)
     }
 
@@ -43,7 +43,7 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
         Expr::Int(i) => *i,
         Expr::Neg(e) => -interp_expr(e, env),
         Expr::Add(e1, e2) => interp_expr(e1, env) + interp_expr(e2, env),
-        Expr::Var(v) => interp_expr(env.get(v).expect("undefined variable"), env),
+        Expr::Var(sym) => interp_expr(env.get(sym).expect("undefined variable"), env),
         Expr::Let(x, e, body) => {
             let mut inner_env = env.shallow_clone();
             inner_env.set(x, e);
@@ -53,5 +53,5 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
 }
 
 pub fn interp(p: &Program) {
-    println!("Result: {}", interp_expr(&p.Expr, &Env::new()))
+    println!("Result: {}", interp_expr(&p.expr, &Env::new()))
 }
