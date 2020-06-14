@@ -1,11 +1,11 @@
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol {
-    Value: String,
+    value: String,
 }
 
 impl Symbol {
     pub fn new(value: String) -> Symbol {
-        Symbol { Value: value }
+        Symbol { value }
     }
 }
 
