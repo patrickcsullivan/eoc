@@ -69,3 +69,44 @@ impl ProgramFolder for ProgramUniquifier {
         Program::new(ctx.fold(p.expr))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::{Expr, Program, ProgramFolder};
+    use crate::uniquify;
+
+    #[test]
+    fn uniquify() {
+        let prog = Program::new(Expr::let_bind(
+            "my_var",
+            Expr::int(42),
+            Expr::let_bind(
+                "input",
+                Expr::read(),
+                Expr::let_bind(
+                    "my_var",
+                    Expr::add(Expr::var("my_var"), Expr::neg(Expr::var("input"))),
+                    Expr::var("my_var"),
+                ),
+            ),
+        ));
+
+        let expected = Program::new(Expr::let_bind(
+            "v12345",
+            Expr::int(42),
+            Expr::let_bind(
+                "v12346",
+                Expr::read(),
+                Expr::let_bind(
+                    "v12347",
+                    Expr::add(Expr::var("v12345"), Expr::neg(Expr::var("v12346"))),
+                    Expr::var("v12347"),
+                ),
+            ),
+        ));
+
+        let mut ctx = uniquify::ProgramUniquifier {};
+        let actual = ctx.fold(prog);
+        assert_eq!(actual, expected);
+    }
+}

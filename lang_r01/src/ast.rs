@@ -9,10 +9,10 @@ impl Symbol {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Read,
-    Int(i64),
+    Int(i64), // TODO: Replace Int with a ConcreteValue variant
     Neg(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Var(Box<Symbol>),
@@ -45,7 +45,7 @@ impl Expr {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Program {
     pub expr: Box<Expr>,
 }
