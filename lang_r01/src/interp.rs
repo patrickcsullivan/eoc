@@ -1,29 +1,30 @@
 use super::ast::{Expr, Program, Symbol};
 use std::collections::HashMap;
 
-struct Env<'a> {
-    vars: HashMap<&'a Symbol, &'a Expr>,
+struct Env {
+    // vars: HashMap<&'a Symbol, &'a Expr>,
+    bindings: HashMap<Box<Symbol>, i64>,
 }
 
-impl<'a> Env<'a> {
-    fn new() -> Env<'a> {
+impl Env {
+    fn new() -> Env {
         Env {
-            vars: HashMap::new(),
+            bindings: HashMap::new(),
         }
     }
 
-    fn set(&mut self, var: &'a Symbol, expr: &'a Expr) {
-        self.vars.insert(var, expr);
+    fn set(&mut self, sym: Box<Symbol>, val: i64) {
+        self.bindings.insert(sym, val);
     }
 
-    fn get(&self, var: &Symbol) -> Option<&'a Expr> {
-        self.vars.get(var).map(|&v| v)
+    fn get(&self, sym: &Symbol) -> Option<i64> {
+        self.bindings.get(sym).copied()
     }
 
     fn shallow_clone(&self) -> Env {
         let mut env = Env::new();
-        for (&var, &expr) in self.vars.iter() {
-            env.set(var, expr);
+        for (sym, val) in self.bindings.iter() {
+            env.set(sym.clone(), val.clone());
         }
         env
     }
@@ -46,11 +47,12 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
         Expr::Int(i) => *i,
         Expr::Neg(e) => -interp_expr(e, env),
         Expr::Add(e1, e2) => interp_expr(e1, env) + interp_expr(e2, env),
-        Expr::Var(sym) => interp_expr(env.get(sym).expect("undefined variable"), env),
-        Expr::Let(x, e, body) => {
-            let mut inner_env = env.shallow_clone();
-            inner_env.set(x, e);
-            interp_expr(body, &inner_env)
+        Expr::Var(sym) => env.get(sym).expect("undefined variable"),
+        Expr::Let(sym, e, body) => {
+            let val = interp_expr(e, env);
+            let mut new_env = env.shallow_clone();
+            new_env.set(sym.clone(), val);
+            interp_expr(body, &new_env)
         }
     }
 }

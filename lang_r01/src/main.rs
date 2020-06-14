@@ -11,10 +11,18 @@ fn main() {
         Expr::let_bind(
             "input",
             Expr::read(),
-            Expr::add(Expr::var("my_var"), Expr::neg(Expr::var("input"))),
+            Expr::let_bind(
+                "my_var",
+                Expr::add(Expr::var("my_var"), Expr::neg(Expr::var("input"))),
+                Expr::var("my_var"),
+            ),
         ),
     );
     let prog = Program::new(expr);
+
+    // use ast::ProgramFolder;
+    // let mut ctx = uniquify::ProgramUniquifier {};
+    // let prog2 = ctx.fold(prog);
 
     interp::interp(&prog);
 }
