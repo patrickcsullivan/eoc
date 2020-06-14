@@ -33,6 +33,9 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
     match expr {
         Expr::Read => {
             use std::io;
+            use std::io::prelude::*;
+            print!("Provide input: ");
+            io::stdout().flush().unwrap();
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)

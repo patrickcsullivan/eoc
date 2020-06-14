@@ -43,9 +43,7 @@ pub struct ProgramUniquifier {}
 impl ProgramFolder for ProgramUniquifier {
     fn fold(&mut self, p: Program) -> Program {
         let mut ctx = ExprUniquifier::new();
-        Program {
-            expr: ctx.fold(p.expr),
-        }
+        Program::new(ctx.fold(p.expr))
     }
 }
 //

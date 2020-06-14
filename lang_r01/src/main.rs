@@ -4,7 +4,19 @@ mod uniquify;
 mod x86;
 
 fn main() {
-    println!("Hello, world!");
+    use ast::{Expr, Program};
+    let expr = Expr::let_bind(
+        "my_var",
+        Expr::int(42),
+        Expr::let_bind(
+            "input",
+            Expr::read(),
+            Expr::add(Expr::var("my_var"), Expr::neg(Expr::var("input"))),
+        ),
+    );
+    let prog = Program::new(expr);
+
+    interp::interp(&prog);
 }
 
 // struct Ctx {

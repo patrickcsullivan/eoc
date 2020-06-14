@@ -19,9 +19,41 @@ pub enum Expr {
     Let(Box<Symbol>, Box<Expr>, Box<Expr>),
 }
 
+impl Expr {
+    pub fn read() -> Box<Expr> {
+        Box::new(Expr::Read)
+    }
+
+    pub fn int(i: i64) -> Box<Expr> {
+        Box::new(Expr::Int(i))
+    }
+
+    pub fn neg(e: Box<Expr>) -> Box<Expr> {
+        Box::new(Expr::Neg(e))
+    }
+
+    pub fn add(e1: Box<Expr>, e2: Box<Expr>) -> Box<Expr> {
+        Box::new(Expr::Add(e1, e2))
+    }
+
+    pub fn var(s: &str) -> Box<Expr> {
+        Box::new(Expr::Var(Box::new(Symbol::new(s.to_owned()))))
+    }
+
+    pub fn let_bind(s: &str, e: Box<Expr>, body: Box<Expr>) -> Box<Expr> {
+        Box::new(Expr::Let(Box::new(Symbol::new(s.to_owned())), e, body))
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Program {
     pub expr: Box<Expr>,
+}
+
+impl Program {
+    pub fn new(e: Box<Expr>) -> Program {
+        Program { expr: e }
+    }
 }
 
 pub trait ExprFolder {
