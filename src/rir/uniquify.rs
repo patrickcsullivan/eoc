@@ -1,4 +1,4 @@
-use super::ast::{Expr, ExprFolder, Program, ProgramFolder, Symbol};
+use super::{Expr, ExprFolder, Program, ProgramFolder, Symbol};
 use std::collections::HashMap;
 
 /// Maintains state necessary for uniquify-ing the variable names in an AST.
@@ -72,12 +72,12 @@ impl ProgramFolder for ProgramUniquifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::{Expr, Program, ProgramFolder};
-    use crate::uniquify;
+    use super::super::{Expr, ExprFolder};
+    use super::ExprUniquifier;
 
     #[test]
     fn uniquify() {
-        let prog = Program::new(Expr::let_bind(
+        let expr = Expr::let_bind(
             "my_var",
             Expr::int(42),
             Expr::let_bind(
@@ -89,9 +89,9 @@ mod tests {
                     Expr::var("my_var"),
                 ),
             ),
-        ));
+        );
 
-        let expected = Program::new(Expr::let_bind(
+        let expected = Expr::let_bind(
             "v12345",
             Expr::int(42),
             Expr::let_bind(
@@ -103,10 +103,10 @@ mod tests {
                     Expr::var("v12347"),
                 ),
             ),
-        ));
+        );
 
-        let mut ctx = uniquify::ProgramUniquifier {};
-        let actual = ctx.fold(prog);
+        let mut ctx = ExprUniquifier::new();
+        let actual = ctx.fold(expr);
         assert_eq!(actual, expected);
     }
 }

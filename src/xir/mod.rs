@@ -1,3 +1,5 @@
+//! XIR (x86 Intermediate Language)
+
 // use std::collections::HashMap;
 
 // #[derive(Clone, Copy, Debug)]

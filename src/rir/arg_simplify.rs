@@ -1,4 +1,4 @@
-use super::ast::{Expr, ExprFolder};
+use super::{Expr, ExprFolder};
 
 pub struct ExprArgSimplifier {
     pub counter: u64,
@@ -86,8 +86,8 @@ fn is_complex_operand(op: &Expr) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::arg_simplify::ExprArgSimplifier;
-    use crate::ast::{Expr, ExprFolder};
+    use super::super::{Expr, ExprFolder};
+    use super::ExprArgSimplifier;
 
     #[test]
     fn already_simplified() {

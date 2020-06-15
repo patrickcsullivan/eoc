@@ -1,3 +1,9 @@
+//! RIR (R Intermediate Language)
+
+pub mod arg_simplify;
+pub mod interp;
+pub mod uniquify;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol {
     value: String,
@@ -45,17 +51,6 @@ impl Expr {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Program {
-    pub expr: Box<Expr>,
-}
-
-impl Program {
-    pub fn new(e: Box<Expr>) -> Program {
-        Program { expr: e }
-    }
-}
-
 pub trait ExprFolder {
     fn fold(&mut self, e: Box<Expr>) -> Box<Expr> {
         match *e {
@@ -89,6 +84,17 @@ pub trait ExprFolder {
 
     fn fold_int(&mut self, i: i64) -> Box<Expr> {
         Box::new(Expr::Int(i))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Program {
+    pub expr: Box<Expr>,
+}
+
+impl Program {
+    pub fn new(e: Box<Expr>) -> Program {
+        Program { expr: e }
     }
 }
 

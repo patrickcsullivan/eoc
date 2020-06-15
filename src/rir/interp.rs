@@ -1,4 +1,4 @@
-use super::ast::{Expr, Program, Symbol};
+use super::{Expr, Program, Symbol};
 use std::collections::HashMap;
 
 struct Env {

@@ -1,11 +1,8 @@
-mod arg_simplify;
-mod ast;
-mod interp;
-mod uniquify;
-mod x86;
+mod rir;
+mod xir;
 
 fn main() {
-    use ast::{Expr, ExprFolder, Program};
+    use rir::{Expr, ExprFolder, Program};
     let expr = Expr::let_bind(
         "my_var",
         Expr::int(42),
@@ -20,36 +17,12 @@ fn main() {
         ),
     );
 
-    let mut uniquify_ctx = uniquify::ExprUniquifier::new();
+    let mut uniquify_ctx = rir::uniquify::ExprUniquifier::new();
     let expr = uniquify_ctx.fold(expr);
 
-    let mut arg_simplify_ctx = arg_simplify::ExprArgSimplifier::new(uniquify_ctx.counter);
+    let mut arg_simplify_ctx = rir::arg_simplify::ExprArgSimplifier::new(uniquify_ctx.counter);
     let expr = arg_simplify_ctx.fold(expr);
 
     let prog = Program::new(expr);
-    interp::interp(&prog);
+    rir::interp::interp(&prog);
 }
-
-// struct Ctx {
-//     counter: u64,
-// }
-
-// impl Ctx {
-//     pub fn new() -> Ctx {
-//         Ctx { counter: 0 }
-//     }
-
-//     pub fn get_counter(&mut self) -> u64 {
-//         let c = self.counter;
-//         self.counter += 1;
-//         c
-//     }
-
-//     pub fn perform_calculation(&mut self, my_num: u64) -> u64 {
-//         self.get_counter() + my_num
-//     }
-// }
-
-// pub fn perform_calculation(ctx: &mut Ctx, my_num: u64) -> u64 {
-//     ctx.get_counter() + my_num
-// }
