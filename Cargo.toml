@@ -1,6 +1,9 @@
-[workspace]
+[package]
+name = "lang_r01"
+version = "0.1.0"
+authors = ["Patrick Sullivan <patricksullivan08@gmail.com>"]
+edition = "2018"
 
-members = [
-    "lang_r00",
-    "lang_r01",
-]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
