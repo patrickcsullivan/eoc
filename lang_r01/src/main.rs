@@ -1,10 +1,11 @@
+mod arg_simplify;
 mod ast;
 mod interp;
 mod uniquify;
 mod x86;
 
 fn main() {
-    use ast::{Expr, Program};
+    use ast::{Expr, ExprFolder, Program};
     let expr = Expr::let_bind(
         "my_var",
         Expr::int(42),
@@ -18,13 +19,15 @@ fn main() {
             ),
         ),
     );
+
+    let mut uniquify_ctx = uniquify::ExprUniquifier::new();
+    let expr = uniquify_ctx.fold(expr);
+
+    let mut arg_simplify_ctx = arg_simplify::ExprArgSimplifier::new(uniquify_ctx.counter);
+    let expr = arg_simplify_ctx.fold(expr);
+
     let prog = Program::new(expr);
-
-    use ast::ProgramFolder;
-    let mut ctx = uniquify::ProgramUniquifier {};
-    let prog2 = ctx.fold(prog);
-
-    interp::interp(&prog2);
+    interp::interp(&prog);
 }
 
 // struct Ctx {

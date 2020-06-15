@@ -2,8 +2,8 @@ use super::ast::{Expr, ExprFolder, Program, ProgramFolder, Symbol};
 use std::collections::HashMap;
 
 /// Maintains state necessary for uniquify-ing the variable names in an AST.
-struct ExprUniquifier {
-    counter: u64,
+pub struct ExprUniquifier {
+    pub counter: u64,
 
     /// Maps variable names from source code to generated uniqued variable
     /// names. Contains only variables that are currently in scope.
