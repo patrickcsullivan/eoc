@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 use std::fmt;
 
 struct Env {
-    // vars: HashMap<&'a Symbol, &'a Expr>,
     bindings: HashMap<Box<Symbol>, Literal>,
 }
 
