@@ -1,9 +1,11 @@
-use super::{Expr, Program, Symbol};
+use super::{Expr, Literal, Program, Symbol};
 use std::collections::HashMap;
+use std::convert::TryFrom;
+use std::fmt;
 
 struct Env {
     // vars: HashMap<&'a Symbol, &'a Expr>,
-    bindings: HashMap<Box<Symbol>, i64>,
+    bindings: HashMap<Box<Symbol>, Literal>,
 }
 
 impl Env {
@@ -13,11 +15,11 @@ impl Env {
         }
     }
 
-    fn set(&mut self, sym: Box<Symbol>, val: i64) {
+    fn set(&mut self, sym: Box<Symbol>, val: Literal) {
         self.bindings.insert(sym, val);
     }
 
-    fn get(&self, sym: &Symbol) -> Option<i64> {
+    fn get(&self, sym: &Symbol) -> Option<Literal> {
         self.bindings.get(sym).copied()
     }
 
@@ -30,7 +32,7 @@ impl Env {
     }
 }
 
-fn interp_expr(expr: &Expr, env: &Env) -> i64 {
+fn interp_expr(expr: &Expr, env: &Env) -> Literal {
     match expr {
         Expr::Read => {
             use std::io;
@@ -42,11 +44,19 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
                 .read_line(&mut input)
                 .expect("error reading input");
             input = input.trim().to_string();
-            input.parse().expect("expected integer input")
+            TryFrom::try_from(input).expect("could not parse input")
         }
-        Expr::Int(i) => *i,
-        Expr::Neg(e) => -interp_expr(e, env),
-        Expr::Add(e1, e2) => interp_expr(e1, env) + interp_expr(e2, env),
+        Expr::Lit(lit) => *lit,
+        Expr::Neg(e) => match interp_expr(e, env) {
+            Literal::Int(i) => Literal::Int(-i),
+        },
+        Expr::Add(e1, e2) => {
+            let ipterpd1 = interp_expr(e1, env);
+            let interpd2 = interp_expr(e2, env);
+            match (ipterpd1, interpd2) {
+                (Literal::Int(i1), Literal::Int(i2)) => Literal::Int(i1 + i2),
+            }
+        }
         Expr::Var(sym) => env.get(sym).expect("undefined variable"),
         Expr::Let(sym, e, body) => {
             let val = interp_expr(e, env);
@@ -59,4 +69,21 @@ fn interp_expr(expr: &Expr, env: &Env) -> i64 {
 
 pub fn interp(p: &Program) {
     println!("Result: {}", interp_expr(&p.expr, &Env::new()))
+}
+
+impl TryFrom<String> for Literal {
+    type Error = std::num::ParseIntError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let x = value.parse()?;
+        Ok(Literal::Int(x))
+    }
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Literal::Int(i) => write!(f, "{}", i),
+        }
+    }
 }

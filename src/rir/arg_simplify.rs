@@ -20,7 +20,7 @@ impl ExprFolder for ExprArgSimplifier {
     fn fold(&mut self, e: Box<Expr>) -> Box<Expr> {
         match *e {
             Expr::Read => e,   // No args so just return
-            Expr::Int(_) => e, // Primitive so no args so just return
+            Expr::Lit(_) => e, // Primitive so no args so just return
             Expr::Neg(op) => {
                 if is_complex_operand(&op) {
                     let new_sym_name = self.new_sym_name();
@@ -78,7 +78,7 @@ impl ExprFolder for ExprArgSimplifier {
 
 fn is_complex_operand(op: &Expr) -> bool {
     match *op {
-        Expr::Int(_) => false,
+        Expr::Lit(_) => false,
         Expr::Var(_) => false,
         _ => true,
     }

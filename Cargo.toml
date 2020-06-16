@@ -1,5 +1,5 @@
 [package]
-name = "lang_r01"
+name = "eoc"
 version = "0.1.0"
 authors = ["Patrick Sullivan <patricksullivan08@gmail.com>"]
 edition = "2018"

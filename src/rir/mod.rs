@@ -15,10 +15,15 @@ impl Symbol {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Literal {
+    Int(i64),
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Read,
-    Int(i64), // TODO: Replace Int with a ConcreteValue variant
+    Lit(Literal), // TODO: Replace Int with a ConcreteValue variant
     Neg(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Var(Box<Symbol>),
@@ -31,7 +36,7 @@ impl Expr {
     }
 
     pub fn int(i: i64) -> Box<Expr> {
-        Box::new(Expr::Int(i))
+        Box::new(Expr::Lit(Literal::Int(i)))
     }
 
     pub fn neg(e: Box<Expr>) -> Box<Expr> {
@@ -80,10 +85,6 @@ pub trait ExprFolder {
 
     fn fold_let(&mut self, sym: Box<Symbol>, e: Box<Expr>, body: Box<Expr>) -> Box<Expr> {
         Box::new(Expr::Let(self.fold_sym(sym), self.fold(e), self.fold(body)))
-    }
-
-    fn fold_int(&mut self, i: i64) -> Box<Expr> {
-        Box::new(Expr::Int(i))
     }
 }
 
