@@ -1,6 +1,8 @@
-//! RIR (R Intermediate Language)
+//! RIR (R Intermediate Representation)
+//! Closely corresponsds to the AST of source code.
 
 pub mod arg_simplify;
+pub mod explicate;
 pub mod interp;
 pub mod uniquify;
 
@@ -10,20 +12,22 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    pub fn new(value: String) -> Symbol {
-        Symbol { value }
+    pub fn new(value: &str) -> Symbol {
+        Symbol {
+            value: value.to_string(),
+        }
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Literal {
+pub enum Lit {
     Int(i64),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Read,
-    Lit(Literal), // TODO: Replace Int with a ConcreteValue variant
+    Lit(Lit),
     Neg(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Var(Box<Symbol>),
@@ -36,7 +40,7 @@ impl Expr {
     }
 
     pub fn int(i: i64) -> Box<Expr> {
-        Box::new(Expr::Lit(Literal::Int(i)))
+        Box::new(Expr::Lit(Lit::Int(i)))
     }
 
     pub fn neg(e: Box<Expr>) -> Box<Expr> {
@@ -48,11 +52,11 @@ impl Expr {
     }
 
     pub fn var(s: &str) -> Box<Expr> {
-        Box::new(Expr::Var(Box::new(Symbol::new(s.to_owned()))))
+        Box::new(Expr::Var(Box::new(Symbol::new(s))))
     }
 
     pub fn let_bind(s: &str, e: Box<Expr>, body: Box<Expr>) -> Box<Expr> {
-        Box::new(Expr::Let(Box::new(Symbol::new(s.to_owned())), e, body))
+        Box::new(Expr::Let(Box::new(Symbol::new(s)), e, body))
     }
 }
 

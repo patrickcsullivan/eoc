@@ -1,3 +1,4 @@
+mod cir;
 mod rir;
 mod xir;
 

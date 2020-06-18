@@ -1,10 +1,10 @@
-use super::{Expr, Literal, Program, Symbol};
+use super::{Expr, Lit, Program, Symbol};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt;
 
 struct Env {
-    bindings: HashMap<Box<Symbol>, Literal>,
+    bindings: HashMap<Box<Symbol>, Lit>,
 }
 
 impl Env {
@@ -14,11 +14,11 @@ impl Env {
         }
     }
 
-    fn set(&mut self, sym: Box<Symbol>, val: Literal) {
+    fn set(&mut self, sym: Box<Symbol>, val: Lit) {
         self.bindings.insert(sym, val);
     }
 
-    fn get(&self, sym: &Symbol) -> Option<Literal> {
+    fn get(&self, sym: &Symbol) -> Option<Lit> {
         self.bindings.get(sym).copied()
     }
 
@@ -31,7 +31,7 @@ impl Env {
     }
 }
 
-fn interp_expr(expr: &Expr, env: &Env) -> Literal {
+fn interp_expr(expr: &Expr, env: &Env) -> Lit {
     match expr {
         Expr::Read => {
             use std::io;
@@ -47,13 +47,13 @@ fn interp_expr(expr: &Expr, env: &Env) -> Literal {
         }
         Expr::Lit(lit) => *lit,
         Expr::Neg(e) => match interp_expr(e, env) {
-            Literal::Int(i) => Literal::Int(-i),
+            Lit::Int(i) => Lit::Int(-i),
         },
         Expr::Add(e1, e2) => {
             let ipterpd1 = interp_expr(e1, env);
             let interpd2 = interp_expr(e2, env);
             match (ipterpd1, interpd2) {
-                (Literal::Int(i1), Literal::Int(i2)) => Literal::Int(i1 + i2),
+                (Lit::Int(i1), Lit::Int(i2)) => Lit::Int(i1 + i2),
             }
         }
         Expr::Var(sym) => env.get(sym).expect("undefined variable"),
@@ -70,19 +70,19 @@ pub fn interp(p: &Program) {
     println!("Result: {}", interp_expr(&p.expr, &Env::new()))
 }
 
-impl TryFrom<String> for Literal {
+impl TryFrom<String> for Lit {
     type Error = std::num::ParseIntError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let x = value.parse()?;
-        Ok(Literal::Int(x))
+        Ok(Lit::Int(x))
     }
 }
 
-impl fmt::Display for Literal {
+impl fmt::Display for Lit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Literal::Int(i) => write!(f, "{}", i),
+            Lit::Int(i) => write!(f, "{}", i),
         }
     }
 }

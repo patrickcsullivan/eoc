@@ -19,7 +19,7 @@ impl ExprUniquifier {
     }
 
     pub fn new_sym(&mut self) -> Box<Symbol> {
-        let sym = Box::new(Symbol::new(format!("v{}", self.counter)));
+        let sym = Box::new(Symbol::new(&format!("v{}", self.counter)));
         self.counter += 1;
         sym
     }
