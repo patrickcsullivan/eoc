@@ -1,5 +1,6 @@
 //! CIR (C-like Intermediate Representation)
 
+pub mod select_instr;
 pub mod uncover;
 
 use std::collections::{HashMap, HashSet};
