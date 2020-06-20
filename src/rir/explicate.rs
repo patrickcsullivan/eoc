@@ -95,7 +95,7 @@ fn fold_root_expr(expr: Expr) -> Box<cir::Tail> {
     }
 }
 
-fn fold_program(p: Program) -> cir::Program {
+pub fn fold_program(p: Program) -> cir::Program {
     let start_proc = fold_root_expr(*p.expr);
     let tails = {
         let mut tails = HashMap::new();

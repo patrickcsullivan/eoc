@@ -1,13 +1,13 @@
 //! CIR (C-like Intermediate Representation)
 
-mod uncover;
+pub mod uncover;
 
 use std::collections::{HashMap, HashSet};
 
 /// Symbol used for variable names.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol {
-    value: String,
+    pub value: String,
 }
 
 impl Symbol {

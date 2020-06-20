@@ -25,5 +25,11 @@ fn main() {
     let expr = arg_simplify_ctx.fold(expr);
 
     let prog = Program::new(expr);
-    rir::interp::interp(&prog);
+    // rir::interp::interp(&prog);
+
+    let prog = rir::explicate::fold_program(prog);
+    let prog = cir::uncover::fold_program(prog);
+    for s in prog.info.symbols {
+        println!("LOCAL: {}", s.value);
+    }
 }
