@@ -1,6 +1,8 @@
 //! CIR (C-like Intermediate Representation)
 
-use std::collections::HashMap;
+mod uncover;
+
+use std::collections::{HashMap, HashSet};
 
 /// Symbol used for variable names.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -100,7 +102,18 @@ impl Label {
     }
 }
 
-pub struct Info {}
+#[derive(Clone, Debug, PartialEq)]
+pub struct Info {
+    pub symbols: HashSet<Symbol>,
+}
+
+impl Info {
+    pub fn new() -> Info {
+        Info {
+            symbols: HashSet::new(),
+        }
+    }
+}
 
 pub struct Program {
     pub info: Info,

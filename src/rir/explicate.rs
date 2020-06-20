@@ -103,7 +103,7 @@ fn fold_program(p: Program) -> cir::Program {
         tails
     };
     cir::Program {
-        info: cir::Info {},
+        info: cir::Info::new(),
         tails,
     }
 }
