@@ -1,5 +1,7 @@
 // ! PXIR (Pseudo-x86 Intermediate Representation)
 
+mod assign_homes;
+
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -22,7 +24,7 @@ pub enum Register {
     R15,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Symbol {
     pub value: String,
 }
@@ -50,6 +52,10 @@ impl Arg {
 
     pub fn reg(reg: Register) -> Box<Arg> {
         Box::new(Arg::Reg(reg))
+    }
+
+    pub fn deref(reg: Register, offset: i64) -> Box<Arg> {
+        Box::new(Arg::Deref(reg, offset))
     }
 
     pub fn var(s: &str) -> Box<Arg> {
