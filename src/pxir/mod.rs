@@ -78,6 +78,7 @@ pub enum Instr {
     Retq,
     Negq(Box<Arg>),
     Callq(Box<Label>),
+    Jumpq(Box<Label>),
     Pushq(Box<Arg>),
     Popq(Box<Arg>),
 }
@@ -105,6 +106,10 @@ impl Instr {
 
     pub fn callq(label: &str) -> Instr {
         Instr::Callq(Label::new(label))
+    }
+
+    pub fn jumpq(label: &str) -> Instr {
+        Instr::Jumpq(Label::new(label))
     }
 
     pub fn pushq(dst: Box<Arg>) -> Instr {

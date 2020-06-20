@@ -1,74 +1,107 @@
 use super::super::pxir;
 use super::*;
 
-pub fn fold_arg(arg: Box<Arg>) -> Box<pxir::Arg> {
+/// Folds the CIR argument into a PXIR argument.
+fn fold_arg(arg: Box<Arg>) -> Box<pxir::Arg> {
     match *arg {
         Arg::Int(i) => pxir::Arg::int(i),
         Arg::Var(sym) => pxir::Arg::var(&sym.value),
     }
 }
 
-pub fn fold_read_expr(dst_sym: Box<Symbol>) -> Vec<pxir::Instr> {
-    vec![
-        pxir::Instr::callq("read_int"),
-        pxir::Instr::movq(
-            pxir::Arg::reg(pxir::Register::Rax),
-            pxir::Arg::var(&dst_sym.value),
-        ),
-    ]
-}
+mod assign {
+    use super::super::super::pxir;
+    use super::super::*;
+    use super::fold_arg;
 
-pub fn fold_arg_expr(dst_sym: Box<Symbol>, arg: Box<Arg>) -> pxir::Instr {
-    pxir::Instr::movq(fold_arg(arg), pxir::Arg::var(&dst_sym.value))
-}
+    /// Creates PXIR instructions that read and assign the parsed input to the
+    /// destination.
+    fn read_instrs(dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
+        vec![
+            pxir::Instr::callq("read_int"),
+            pxir::Instr::movq(pxir::Arg::reg(pxir::Register::Rax), dst),
+        ]
+    }
 
-pub fn fold_neg_expr(dst_sym: Box<Symbol>, arg: Box<Arg>) -> Vec<pxir::Instr> {
-    let dst = pxir::Arg::var(&dst_sym.value);
-    let arg = fold_arg(arg);
+    /// Creates PXIR instructions that assign the source argument to the
+    /// destination.
+    fn arg_move_instrs(src: Box<pxir::Arg>, dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
+        vec![pxir::Instr::movq(src, dst)]
+    }
 
-    if let pxir::Arg::Var(sym) = &*arg {
-        if sym.value == dst_sym.value {
-            return vec![pxir::Instr::negq(dst)];
+    /// Creates PXIR instructions that negate the given operand and assign the
+    /// result to the destination.
+    fn neg_instrs(op: Box<pxir::Arg>, dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
+        if let pxir::Arg::Var(arg_sym) = &*op {
+            if let pxir::Arg::Var(dst_sym) = &*dst {
+                if arg_sym.value == dst_sym.value {
+                    return vec![pxir::Instr::negq(dst)];
+                }
+            }
+        }
+        vec![pxir::Instr::movq(op, dst.clone()), pxir::Instr::negq(dst)]
+    }
+
+    /// Creates PXIR instructions that add the given operands and assign the
+    /// result to the destination.
+    fn add_instrs(
+        op1: Box<pxir::Arg>,
+        op2: Box<pxir::Arg>,
+        dst: Box<pxir::Arg>,
+    ) -> Vec<pxir::Instr> {
+        if let pxir::Arg::Var(sym) = &*op1 {
+            if let pxir::Arg::Var(dst_sym) = &*dst {
+                if sym.value == dst_sym.value {
+                    return vec![pxir::Instr::addq(op2, dst)];
+                }
+            }
+        } else if let pxir::Arg::Var(sym) = &*op2 {
+            if let pxir::Arg::Var(dst_sym) = &*dst {
+                if sym.value == dst_sym.value {
+                    return vec![pxir::Instr::addq(op1, dst)];
+                }
+            }
+        }
+        vec![
+            pxir::Instr::movq(op1, dst.clone()),
+            pxir::Instr::addq(op2, dst),
+        ]
+    }
+
+    /// Creates PXIR instructions that evaluate the given expresion and assign
+    /// the result to the destination.
+    pub fn expr_instrs(expr: Box<Expr>, dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
+        match *expr {
+            Expr::Read => read_instrs(dst),
+            Expr::Arg(arg) => {
+                let arg = fold_arg(arg);
+                arg_move_instrs(arg, dst)
+            }
+            Expr::Neg(op) => {
+                let op = fold_arg(op);
+                neg_instrs(op, dst)
+            }
+            Expr::Add(op1, op2) => {
+                let op1 = fold_arg(op1);
+                let op2 = fold_arg(op2);
+                add_instrs(op1, op2, dst)
+            }
         }
     }
-    vec![pxir::Instr::movq(arg, dst.clone()), pxir::Instr::negq(dst)]
 }
 
-pub fn fold_add_expr(dst_sym: Box<Symbol>, arg1: Box<Arg>, arg2: Box<Arg>) -> Vec<pxir::Instr> {
-    let dst = pxir::Arg::var(&dst_sym.value);
-    let arg1 = fold_arg(arg1);
-    let arg2 = fold_arg(arg2);
-
-    if let pxir::Arg::Var(sym) = &*arg1 {
-        if sym.value == dst_sym.value {
-            return vec![pxir::Instr::addq(arg2, dst)];
-        }
-    } else if let pxir::Arg::Var(sym) = &*arg2 {
-        if sym.value == dst_sym.value {
-            return vec![pxir::Instr::addq(arg1, dst)];
-        }
-    }
-    vec![
-        pxir::Instr::movq(arg1, dst.clone()),
-        pxir::Instr::addq(arg2, dst),
-    ]
-}
-
-pub fn fold_assign(dst_sym: Box<Symbol>, expr: Box<Expr>) -> Vec<pxir::Instr> {
-    match *expr {
-        Expr::Read => fold_read_expr(dst_sym),
-        Expr::Arg(arg) => vec![fold_arg_expr(dst_sym, arg)],
-        Expr::Neg(arg) => fold_neg_expr(dst_sym, arg),
-        Expr::Add(arg1, arg2) => fold_add_expr(dst_sym, arg1, arg2),
-    }
-}
-
+/// Folds the CIR statment into PXIR instructions.
 pub fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
     match stmt {
-        Stmt::Assign(dst_sym, expr) => fold_assign(dst_sym, expr),
+        Stmt::Assign(dst_sym, expr) => {
+            let dst = pxir::Arg::var(&dst_sym.value);
+            assign::expr_instrs(expr, dst)
+        }
     }
 }
 
+/// Folds the CIR tail into PXIR instructions that return by jumping to the
+/// given conclusion label.
 pub fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
     match tail {
         Tail::Seq(stmt, tail) => {
@@ -76,25 +109,153 @@ pub fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
             instrs.extend(fold_tail(*tail, conclusion_label));
             instrs
         }
-        Tail::Ret(expr) => fold_assign(dst_sym: Box<Symbol>, expr: Box<Expr>),
+        Tail::Ret(expr) => {
+            let mut instrs = assign::expr_instrs(expr, pxir::Arg::reg(pxir::Register::Rax));
+            instrs.push(pxir::Instr::jumpq(conclusion_label));
+            instrs
+        }
     }
 }
-// pub fn fold_program(p: Program) -> Program {
-//     let mut ctx = Ctx::new();
-//     for t in p.tails.values() {
-//         ctx.fold_tail(t);
-//     }
-
-//     Program {
-//         info: Info {
-//             symbols: ctx.symbols,
-//         },
-//         tails: p.tails,
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
+    use super::super::super::pxir;
     use super::super::*;
-    // use super::fold_program;
+    use super::fold_tail;
+
+    #[test]
+    fn read() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::read()),
+            Tail::ret(Expr::arg(Arg::var("x"))),
+        );
+        let expected = vec![
+            pxir::Instr::callq("read_int"),
+            pxir::Instr::movq(pxir::Arg::reg(pxir::Register::Rax), pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("read_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "read_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn add() {
+        let tail = Tail::seq(
+            Stmt::assign("x.1", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("x.2", Expr::arg(Arg::int(22))),
+                Tail::seq(
+                    Stmt::assign("y", Expr::add(Arg::var("x.1"), Arg::var("x.2"))),
+                    Tail::ret(Expr::arg(Arg::var("y"))),
+                ),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x.1")),
+            pxir::Instr::movq(pxir::Arg::int(22), pxir::Arg::var("x.2")),
+            pxir::Instr::movq(pxir::Arg::var("x.1"), pxir::Arg::var("y")),
+            pxir::Instr::addq(pxir::Arg::var("x.2"), pxir::Arg::var("y")),
+            pxir::Instr::movq(pxir::Arg::var("y"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "add_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn add_in_place_left_op() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("x", Expr::add(Arg::var("x"), Arg::int(22))),
+                Tail::ret(Expr::arg(Arg::var("x"))),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
+            pxir::Instr::addq(pxir::Arg::int(22), pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_left_op_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "add_in_place_left_op_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn add_in_place_right_op() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("x", Expr::add(Arg::int(22), Arg::var("x"))),
+                Tail::ret(Expr::arg(Arg::var("x"))),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
+            pxir::Instr::addq(pxir::Arg::int(22), pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_right_op_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "add_in_place_right_op_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn add_in_place_both_ops() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("x", Expr::add(Arg::var("x"), Arg::var("x"))),
+                Tail::ret(Expr::arg(Arg::var("x"))),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
+            pxir::Instr::addq(pxir::Arg::var("x"), pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_both_ops_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "add_in_place_both_ops_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn neg() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("y", Expr::neg(Arg::var("x"))),
+                Tail::ret(Expr::arg(Arg::var("y"))),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::var("y")),
+            pxir::Instr::negq(pxir::Arg::var("y")),
+            pxir::Instr::movq(pxir::Arg::var("y"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("neg_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "neg_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn neg_in_place() {
+        let tail = Tail::seq(
+            Stmt::assign("x", Expr::arg(Arg::int(20))),
+            Tail::seq(
+                Stmt::assign("x", Expr::neg(Arg::var("x"))),
+                Tail::ret(Expr::arg(Arg::var("x"))),
+            ),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
+            pxir::Instr::negq(pxir::Arg::var("x")),
+            pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("neg_in_place_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "neg_in_place_conclusion");
+        assert_eq!(actual, expected);
+    }
 }
