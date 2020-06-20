@@ -1,6 +1,6 @@
 mod cir;
+mod pxir;
 mod rir;
-mod xir;
 
 fn main() {
     use rir::{Expr, ExprFolder, Program};
