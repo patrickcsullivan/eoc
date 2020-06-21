@@ -1,6 +1,7 @@
 // ! PXIR (Pseudo-x86 Intermediate Representation)
 
 mod assign_homes;
+mod patch;
 
 use std::collections::HashMap;
 
@@ -60,6 +61,13 @@ impl Arg {
 
     pub fn var(s: &str) -> Box<Arg> {
         Box::new(Arg::Var(Box::new(Symbol::new(s))))
+    }
+
+    pub fn is_dref(&self) -> bool {
+        match self {
+            Arg::Deref(_, _) => true,
+            _ => false,
+        }
     }
 }
 
