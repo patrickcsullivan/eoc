@@ -17,20 +17,20 @@ pub fn drive(expr: rir::Expr) -> String {
 
     // PXIR folds
     let prog = cir::select_instr::fold_program(prog);
-    let expected = vec![
-        pxir::Instr::movq(pxir::Arg::int(10), pxir::Arg::var("v12345")),
-        pxir::Instr::negq(pxir::Arg::var("v12345")),
-        pxir::Instr::movq(pxir::Arg::int(52), pxir::Arg::reg(pxir::Register::Rax)),
-        pxir::Instr::addq(
-            pxir::Arg::var("v12345"),
-            pxir::Arg::reg(pxir::Register::Rax),
-        ),
-        pxir::Instr::jumpq("conclusion"),
-    ];
-    let label = pxir::Label {
-        value: "start".to_string(),
-    };
-    assert_eq!(prog.blocks.get(&label).unwrap().instrs, expected);
+    // let expected = vec![
+    //     pxir::Instr::movq(pxir::Arg::int(10), pxir::Arg::var("v12345")),
+    //     pxir::Instr::negq(pxir::Arg::var("v12345")),
+    //     pxir::Instr::movq(pxir::Arg::int(52), pxir::Arg::reg(pxir::Register::Rax)),
+    //     pxir::Instr::addq(
+    //         pxir::Arg::var("v12345"),
+    //         pxir::Arg::reg(pxir::Register::Rax),
+    //     ),
+    //     pxir::Instr::jumpq("conclusion"),
+    // ];
+    // let label = pxir::Label {
+    //     value: "start".to_string(),
+    // };
+    // assert_eq!(prog.blocks.get(&label).unwrap().instrs, expected);
 
     let prog = pxir::assign_homes::fold_program(prog);
     let prog = pxir::patch::fold_program(prog);
