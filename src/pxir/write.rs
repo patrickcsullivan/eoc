@@ -19,7 +19,7 @@ impl fmt::Display for Instr {
             Instr::Negq(dst) => write!(f, "negq {}", *dst),
             Instr::Pushq(src) => write!(f, "pushq {}", *src),
             Instr::Popq(dst) => write!(f, "popq {}", *dst),
-            Instr::Callq(_) => panic!("unimplemented"),
+            Instr::Callq(label) => write!(f, "callq {}", *label),
             Instr::Jumpq(label) => write!(f, "jmp {}", *label),
             Instr::Retq => write!(f, "retq"),
         }

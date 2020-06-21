@@ -76,7 +76,7 @@ mod tests {
     use super::ExprUniquifier;
 
     #[test]
-    fn uniquify() {
+    fn shadowed_vars() {
         let expr = Expr::let_bind(
             "my_var",
             Expr::int(42),
@@ -110,12 +110,7 @@ mod tests {
 
     #[test]
     fn no_vars() {
-        let expr = Expr::add(
-            Expr::int(52),
-            Expr::neg(
-                Expr::int(10)
-            ),
-        );
+        let expr = Expr::add(Expr::int(52), Expr::neg(Expr::int(10)));
         let expected = expr.clone();
         let mut ctx = ExprUniquifier::new();
         let actual = ctx.fold(expr);
