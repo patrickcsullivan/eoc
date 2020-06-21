@@ -13,9 +13,9 @@ pub fn write_block(s: &mut String, label: &Label, block: &Block) -> fmt::Result 
 impl fmt::Display for Instr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Instr::Addq { src, dst } => write!(f, "addq {} {}", *src, *dst),
-            Instr::Subq { src, dst } => write!(f, "subq {} {}", *src, *dst),
-            Instr::Movq { src, dst } => write!(f, "movq {} {}", *src, *dst),
+            Instr::Addq { src, dst } => write!(f, "addq {}, {}", *src, *dst),
+            Instr::Subq { src, dst } => write!(f, "subq {}, {}", *src, *dst),
+            Instr::Movq { src, dst } => write!(f, "movq {}, {}", *src, *dst),
             Instr::Negq(dst) => write!(f, "negq {}", *dst),
             Instr::Pushq(src) => write!(f, "pushq {}", *src),
             Instr::Popq(dst) => write!(f, "popq {}", *dst),
@@ -40,22 +40,22 @@ impl fmt::Display for Arg {
 impl fmt::Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let disp = match self {
-            Rsp => "rsp",
-            Rbp => "rbp",
-            Rax => "rax",
-            Rbx => "rbx",
-            Rcx => "rcx",
-            Rdx => "rdx",
-            Rsi => "rsi",
-            Rdi => "rdi",
-            R8 => "r8",
-            R9 => "r9",
-            R10 => "r10",
-            R11 => "r11",
-            R12 => "r12",
-            R13 => "r13",
-            R14 => "r14",
-            R15 => "r15",
+            Register::Rsp => "rsp",
+            Register::Rbp => "rbp",
+            Register::Rax => "rax",
+            Register::Rbx => "rbx",
+            Register::Rcx => "rcx",
+            Register::Rdx => "rdx",
+            Register::Rsi => "rsi",
+            Register::Rdi => "rdi",
+            Register::R8 => "r8",
+            Register::R9 => "r9",
+            Register::R10 => "r10",
+            Register::R11 => "r11",
+            Register::R12 => "r12",
+            Register::R13 => "r13",
+            Register::R14 => "r14",
+            Register::R15 => "r15",
         };
         write!(f, "%{}", disp)
     }

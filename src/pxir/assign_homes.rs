@@ -22,7 +22,7 @@ impl Ctx {
             return Arg::deref(Register::Rbp, *offset);
         }
         self.stack_space += 8;
-        let offset = self.stack_space * -1;
+        let offset = -self.stack_space;
         self.sym_to_home.insert(sym.clone(), offset);
         Arg::deref(Register::Rbp, offset)
     }
