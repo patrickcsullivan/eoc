@@ -100,16 +100,20 @@ pub fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
     }
 }
 
-/// Folds the CIR tail into PXIR instructions that execute the tail and assign
-/// the result to the rax register.
-pub fn fold_tail(tail: Tail) -> Vec<pxir::Instr> {
+/// Folds the CIR tail into PXIR instructions that return by jumping to the
+/// given conclusion label.
+pub fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
     match tail {
         Tail::Seq(stmt, tail) => {
             let mut instrs = fold_stmt(*stmt);
-            instrs.extend(fold_tail(*tail));
+            instrs.extend(fold_tail(*tail, conclusion_label));
             instrs
         }
-        Tail::Ret(expr) => assign::expr_instrs(expr, pxir::Arg::reg(pxir::Register::Rax)),
+        Tail::Ret(expr) => {
+            let mut instrs = assign::expr_instrs(expr, pxir::Arg::reg(pxir::Register::Rax));
+            instrs.push(pxir::Instr::jumpq(conclusion_label));
+            instrs
+        }
     }
 }
 
@@ -129,8 +133,9 @@ mod tests {
             pxir::Instr::callq("read_int"),
             pxir::Instr::movq(pxir::Arg::reg(pxir::Register::Rax), pxir::Arg::var("x")),
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("read_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "read_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -152,8 +157,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::var("x.1"), pxir::Arg::var("y")),
             pxir::Instr::addq(pxir::Arg::var("x.2"), pxir::Arg::var("y")),
             pxir::Instr::movq(pxir::Arg::var("y"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "add_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -170,8 +176,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
             pxir::Instr::addq(pxir::Arg::int(22), pxir::Arg::var("x")),
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_left_op_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "add_in_place_left_op_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -188,8 +195,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
             pxir::Instr::addq(pxir::Arg::int(22), pxir::Arg::var("x")),
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_right_op_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "add_in_place_right_op_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -206,8 +214,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
             pxir::Instr::addq(pxir::Arg::var("x"), pxir::Arg::var("x")),
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("add_in_place_both_ops_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "add_in_place_both_ops_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -225,8 +234,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::var("y")),
             pxir::Instr::negq(pxir::Arg::var("y")),
             pxir::Instr::movq(pxir::Arg::var("y"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("neg_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "neg_conclusion");
         assert_eq!(actual, expected);
     }
 
@@ -243,8 +253,9 @@ mod tests {
             pxir::Instr::movq(pxir::Arg::int(20), pxir::Arg::var("x")),
             pxir::Instr::negq(pxir::Arg::var("x")),
             pxir::Instr::movq(pxir::Arg::var("x"), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::jumpq("neg_in_place_conclusion"),
         ];
-        let actual = fold_tail(*tail);
+        let actual = fold_tail(*tail, "neg_in_place_conclusion");
         assert_eq!(actual, expected);
     }
 }
