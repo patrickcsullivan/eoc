@@ -107,6 +107,27 @@ mod tests {
     }
 
     #[test]
+    fn basic_add_and_neg() {
+        let expr = Expr::add(
+            Expr::int(52),
+            Expr::neg(
+                Expr::int(10)
+            ),
+        );
+        let expected = Expr::let_bind(
+            "v200000",
+            Expr::neg(
+                Expr::int(10)
+            ),
+            Expr::add(Expr::int(52), Expr::var("v200000")),
+        );
+
+        let mut ctx = ExprArgSimplifier::new(200_000);
+        let actual = ctx.fold(expr);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn simplify_neg_arg() {
         let expr = Expr::neg(Expr::read());
         let expected = Expr::let_bind("v200000", Expr::read(), Expr::neg(Expr::var("v200000")));

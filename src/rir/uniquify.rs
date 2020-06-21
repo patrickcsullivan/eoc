@@ -90,7 +90,6 @@ mod tests {
                 ),
             ),
         );
-
         let expected = Expr::let_bind(
             "v12345",
             Expr::int(42),
@@ -104,7 +103,20 @@ mod tests {
                 ),
             ),
         );
+        let mut ctx = ExprUniquifier::new();
+        let actual = ctx.fold(expr);
+        assert_eq!(actual, expected);
+    }
 
+    #[test]
+    fn no_vars() {
+        let expr = Expr::add(
+            Expr::int(52),
+            Expr::neg(
+                Expr::int(10)
+            ),
+        );
+        let expected = expr.clone();
         let mut ctx = ExprUniquifier::new();
         let actual = ctx.fold(expr);
         assert_eq!(actual, expected);

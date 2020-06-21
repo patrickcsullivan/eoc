@@ -49,7 +49,32 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn uncover_locals() {
+    fn basic_add_and_neg() {
+        let expr = Tail::seq(
+            Stmt::assign("v200000", Expr::neg(Arg::int(10))),
+            Tail::ret(Expr::add(Arg::int(52), Arg::var("v200000"))),
+        );
+        let tails = {
+            let mut tails = HashMap::new();
+            tails.insert(Label::new("start"), *expr);
+            tails
+        };
+        let program = Program {
+            info: Info::new(),
+            tails,
+        };
+        let program = fold_program(program);
+
+        let expected_symbols = {
+            let mut expected = HashSet::new();
+            expected.insert(Symbol::new("v200000"));
+            expected
+        };
+        assert_eq!(program.info.symbols, expected_symbols);
+    }
+
+    #[test]
+    fn basic_add() {
         let expr = Tail::seq(
             Stmt::assign("x.1", Expr::arg(Arg::int(20))),
             Tail::seq(

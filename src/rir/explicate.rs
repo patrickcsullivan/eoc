@@ -115,6 +115,22 @@ mod tests {
     use super::fold_root_expr;
 
     #[test]
+    fn basic_add_and_neg() {
+        let expr = Expr::let_bind(
+            "v200000",
+            Expr::neg(Expr::int(10)),
+            Expr::add(Expr::int(52), Expr::var("v200000")),
+        );
+        let expected = cir::Tail::seq(
+            cir::Stmt::assign("v200000", cir::Expr::neg(cir::Arg::int(10))),
+            cir::Tail::ret(cir::Expr::add(cir::Arg::int(52), cir::Arg::var("v200000"))),
+        );
+
+        let actual = fold_root_expr(*expr);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn nested_let_assigns() {
         let expr = Expr::let_bind(
             "y",
@@ -129,7 +145,6 @@ mod tests {
             ),
             Expr::var("y"),
         );
-
         let expected = cir::Tail::seq(
             cir::Stmt::assign("x.1", cir::Expr::arg(cir::Arg::int(20))),
             cir::Tail::seq(

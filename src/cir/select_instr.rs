@@ -91,7 +91,7 @@ mod assign {
 }
 
 /// Folds the CIR statment into PXIR instructions.
-pub fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
+fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
     match stmt {
         Stmt::Assign(dst_sym, expr) => {
             let dst = pxir::Arg::var(&dst_sym.value);
@@ -102,7 +102,7 @@ pub fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
 
 /// Folds the CIR tail into PXIR instructions that return by jumping to the
 /// given conclusion label.
-pub fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
+fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
     match tail {
         Tail::Seq(stmt, tail) => {
             let mut instrs = fold_stmt(*stmt);
@@ -114,6 +114,22 @@ pub fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
             instrs.push(pxir::Instr::jumpq(conclusion_label));
             instrs
         }
+    }
+}
+
+/// Folds the CIR program into a PXIR program.
+pub fn fold_program(program: Program) -> pxir::Program {
+    let mut blocks = HashMap::new();
+    for (label, tail) in program.tails {
+        let label = pxir::Label { value: label.value };
+        // FIXME: Different blocks may need different conclusion labels.
+        let instrs = fold_tail(tail, "conclusion");
+        let block = pxir::Block::new(instrs);
+        blocks.insert(label, block);
+    }
+    pxir::Program {
+        info: pxir::ProgramInfo {},
+        blocks,
     }
 }
 
@@ -136,6 +152,26 @@ mod tests {
             pxir::Instr::jumpq("read_conclusion"),
         ];
         let actual = fold_tail(*tail, "read_conclusion");
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn basic_add_and_neg() {
+        let tail = Tail::seq(
+            Stmt::assign("v200000", Expr::neg(Arg::int(10))),
+            Tail::ret(Expr::add(Arg::int(52), Arg::var("v200000"))),
+        );
+        let expected = vec![
+            pxir::Instr::movq(pxir::Arg::int(10), pxir::Arg::var("v200000")),
+            pxir::Instr::negq(pxir::Arg::var("v200000")),
+            pxir::Instr::movq(pxir::Arg::int(52), pxir::Arg::reg(pxir::Register::Rax)),
+            pxir::Instr::addq(
+                pxir::Arg::var("v200000"),
+                pxir::Arg::reg(pxir::Register::Rax),
+            ),
+            pxir::Instr::jumpq("basic_add_and_neg_conclusion"),
+        ];
+        let actual = fold_tail(*tail, "basic_add_and_neg_conclusion");
         assert_eq!(actual, expected);
     }
 

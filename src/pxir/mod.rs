@@ -1,7 +1,10 @@
 // ! PXIR (Pseudo-x86 Intermediate Representation)
 
-mod assign_homes;
-mod patch;
+pub mod assign_homes;
+pub mod patch;
+mod write;
+
+pub use write::write_block;
 
 use std::collections::HashMap;
 
@@ -71,9 +74,9 @@ impl Arg {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Label {
-    value: String,
+    pub value: String,
 }
 
 impl Label {
@@ -89,12 +92,12 @@ pub enum Instr {
     Addq { src: Box<Arg>, dst: Box<Arg> },
     Subq { src: Box<Arg>, dst: Box<Arg> },
     Movq { src: Box<Arg>, dst: Box<Arg> },
-    Retq,
     Negq(Box<Arg>),
-    Callq(Box<Label>),
-    Jumpq(Box<Label>),
     Pushq(Box<Arg>),
     Popq(Box<Arg>),
+    Callq(Box<Label>),
+    Jumpq(Box<Label>),
+    Retq,
 }
 
 impl Instr {
@@ -136,12 +139,30 @@ impl Instr {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct BlockInfo {}
+pub struct BlockInfo {
+    /// Space needed for stack variables in bytes.
+    pub stack_space: i64,
+}
+
+impl BlockInfo {
+    pub fn new() -> BlockInfo {
+        BlockInfo { stack_space: 0 }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Block {
-    info: BlockInfo,
-    instrs: Vec<Instr>,
+    pub info: BlockInfo,
+    pub instrs: Vec<Instr>,
+}
+
+impl Block {
+    pub fn new(instrs: Vec<Instr>) -> Block {
+        Block {
+            info: BlockInfo::new(),
+            instrs,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -149,6 +170,6 @@ pub struct ProgramInfo {}
 
 #[derive(Clone, Debug)]
 pub struct Program {
-    info: ProgramInfo,
-    blocks: HashMap<Label, Block>,
+    pub info: ProgramInfo,
+    pub blocks: HashMap<Label, Block>,
 }

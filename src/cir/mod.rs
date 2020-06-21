@@ -92,7 +92,7 @@ impl Tail {
 /// Label for a tail definition.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Label {
-    value: String,
+    pub value: String,
 }
 
 impl Label {

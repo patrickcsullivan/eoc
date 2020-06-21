@@ -1,16 +1,16 @@
 use super::*;
 
-pub struct Ctx {
+struct Ctx {
     /// Space needed for stack variables in bytes.
-    pub stack_space: i64,
+    stack_space: i64,
 
     /// Maps symbols to its storage location in the stack frame. Storage
     /// location is represented as an offset in bytes from the base pointer.
-    pub sym_to_home: HashMap<Symbol, i64>,
+    sym_to_home: HashMap<Symbol, i64>,
 }
 
 impl Ctx {
-    pub fn new() -> Ctx {
+    fn new() -> Ctx {
         Ctx {
             stack_space: 0,
             sym_to_home: HashMap::new(),
@@ -43,26 +43,68 @@ impl Ctx {
             _ => instr,
         }
     }
+}
 
-    pub fn fold_block(&mut self, block: Block) -> Block {
-        Block {
-            info: block.info,
-            instrs: block
-                .instrs
-                .into_iter()
-                .map(|i| self.fold_instr(i))
-                .collect(),
-        }
+fn fold_block(block: Block) -> Block {
+    let mut ctx = Ctx::new();
+    let instrs = block
+        .instrs
+        .into_iter()
+        .map(|i| ctx.fold_instr(i))
+        .collect();
+
+    Block {
+        info: BlockInfo {
+            stack_space: ctx.stack_space,
+        },
+        instrs,
+    }
+}
+
+pub fn fold_program(program: Program) -> Program {
+    let mut blocks = HashMap::new();
+    for (label, block) in program.blocks {
+        let block = fold_block(block);
+        blocks.insert(label, block);
+    }
+    Program {
+        info: program.info,
+        blocks,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use super::Ctx;
+    use super::fold_block;
 
     #[test]
-    fn fold_block() {
+    fn basic_add_and_neg() {
+        let instrs = vec![
+            Instr::movq(Arg::int(10), Arg::var("v200000")),
+            Instr::negq(Arg::var("v200000")),
+            Instr::movq(Arg::int(52), Arg::reg(Register::Rax)),
+            Instr::addq(Arg::var("v200000"), Arg::reg(Register::Rax)),
+            Instr::jumpq("basic_add_and_neg_conclusion"),
+        ];
+        let block = Block {
+            info: BlockInfo::new(),
+            instrs,
+        };
+        let expected_instrs = vec![
+            Instr::movq(Arg::int(10), Arg::deref(Register::Rbp, -8)),
+            Instr::negq(Arg::deref(Register::Rbp, -8)),
+            Instr::movq(Arg::int(52), Arg::reg(Register::Rax)),
+            Instr::addq(Arg::deref(Register::Rbp, -8), Arg::reg(Register::Rax)),
+            Instr::jumpq("basic_add_and_neg_conclusion"),
+        ];
+        let actual = fold_block(block);
+        assert_eq!(actual.instrs, expected_instrs);
+        assert_eq!(actual.info.stack_space, 8);
+    }
+
+    #[test]
+    fn moves_and_neg() {
         let instrs = vec![
             Instr::movq(Arg::int(10), Arg::var("x.1")),
             Instr::negq(Arg::var("x.1")),
@@ -71,7 +113,7 @@ mod tests {
             Instr::movq(Arg::var("x.2"), Arg::reg(Register::Rax)),
         ];
         let block = Block {
-            info: BlockInfo {},
+            info: BlockInfo::new(),
             instrs,
         };
         let expected_instrs = vec![
@@ -84,9 +126,8 @@ mod tests {
             Instr::movq(Arg::int(52), Arg::deref(Register::Rbp, -16)),
             Instr::movq(Arg::deref(Register::Rbp, -16), Arg::reg(Register::Rax)),
         ];
-        let mut ctx = Ctx::new();
-        let actual = ctx.fold_block(block);
+        let actual = fold_block(block);
         assert_eq!(actual.instrs, expected_instrs);
-        assert_eq!(ctx.stack_space, 16);
+        assert_eq!(actual.info.stack_space, 16);
     }
 }
