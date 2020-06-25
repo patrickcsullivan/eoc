@@ -43,12 +43,12 @@ impl Expr {
         Box::new(Expr::Lit(Lit::Int(i)))
     }
 
-    #[allow(clippy::should_implement_trait)]
+    #[allow(clippy::should_implement_trait)] // Suggests to implement Neg trait.
     pub fn neg(e: Box<Expr>) -> Box<Expr> {
         Box::new(Expr::Neg(e))
     }
 
-    #[allow(clippy::should_implement_trait)]
+    #[allow(clippy::should_implement_trait)] // Suggests to implement Add trait.
     pub fn add(e1: Box<Expr>, e2: Box<Expr>) -> Box<Expr> {
         Box::new(Expr::Add(e1, e2))
     }
