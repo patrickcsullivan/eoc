@@ -5,7 +5,7 @@ use super::rir::ExprFolder;
 
 pub fn drive(expr: rir::Expr) -> String {
     // RIR folds
-    let mut uniquify_ctx = rir::uniquify::ExprUniquifier::new();
+    let mut uniquify_ctx = rir::uniquify::ExprUniquifier::new(12345);
     let expr = uniquify_ctx.fold(Box::new(expr));
     let mut arg_simplify_ctx = rir::arg_simplify::ExprArgSimplifier::new(uniquify_ctx.counter);
     let expr = arg_simplify_ctx.fold(expr);

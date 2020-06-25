@@ -108,8 +108,8 @@ pub struct Info {
     pub symbols: HashSet<Symbol>,
 }
 
-impl Info {
-    pub fn new() -> Info {
+impl Default for Info {
+    fn default() -> Self {
         Info {
             symbols: HashSet::new(),
         }

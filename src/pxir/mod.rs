@@ -145,8 +145,8 @@ pub struct BlockInfo {
     pub stack_space: i64,
 }
 
-impl BlockInfo {
-    pub fn new() -> BlockInfo {
+impl Default for BlockInfo {
+    fn default() -> Self {
         BlockInfo { stack_space: 0 }
     }
 }
@@ -160,7 +160,7 @@ pub struct Block {
 impl Block {
     pub fn new(instrs: Vec<Instr>) -> Block {
         Block {
-            info: BlockInfo::new(),
+            info: BlockInfo::default(),
             instrs,
         }
     }

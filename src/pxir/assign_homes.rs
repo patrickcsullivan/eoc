@@ -88,7 +88,7 @@ mod tests {
             Instr::jumpq("basic_add_and_neg_conclusion"),
         ];
         let block = Block {
-            info: BlockInfo::new(),
+            info: BlockInfo::default(),
             instrs,
         };
         let expected_instrs = vec![
@@ -113,7 +113,7 @@ mod tests {
             Instr::movq(Arg::var("x.2"), Arg::reg(Register::Rax)),
         ];
         let block = Block {
-            info: BlockInfo::new(),
+            info: BlockInfo::default(),
             instrs,
         };
         let expected_instrs = vec![

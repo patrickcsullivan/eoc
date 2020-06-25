@@ -18,7 +18,7 @@ fn fold_instr(instr: Instr) -> Vec<Instr> {
                     Instr::addq(Arg::reg(Register::Rax), dst),
                 ];
             }
-            vec![Instr::movq(src, dst)]
+            vec![Instr::addq(src, dst)]
         }
         Instr::Subq { src, dst } => {
             if src.is_dref() && dst.is_dref() {
@@ -27,7 +27,7 @@ fn fold_instr(instr: Instr) -> Vec<Instr> {
                     Instr::subq(Arg::reg(Register::Rax), dst),
                 ];
             }
-            vec![Instr::movq(src, dst)]
+            vec![Instr::subq(src, dst)]
         }
         _ => vec![instr],
     }

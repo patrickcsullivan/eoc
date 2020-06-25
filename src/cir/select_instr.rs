@@ -2,8 +2,8 @@ use super::super::pxir;
 use super::*;
 
 /// Folds the CIR argument into a PXIR argument.
-fn fold_arg(arg: Box<Arg>) -> Box<pxir::Arg> {
-    match *arg {
+fn fold_arg(arg: Arg) -> Box<pxir::Arg> {
+    match arg {
         Arg::Int(i) => pxir::Arg::int(i),
         Arg::Var(sym) => pxir::Arg::var(&sym.value),
     }
@@ -70,20 +70,20 @@ mod assign {
 
     /// Creates PXIR instructions that evaluate the given expresion and assign
     /// the result to the destination.
-    pub fn expr_instrs(expr: Box<Expr>, dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
-        match *expr {
+    pub fn expr_instrs(expr: Expr, dst: Box<pxir::Arg>) -> Vec<pxir::Instr> {
+        match expr {
             Expr::Read => read_instrs(dst),
             Expr::Arg(arg) => {
-                let arg = fold_arg(arg);
+                let arg = fold_arg(*arg);
                 arg_move_instrs(arg, dst)
             }
             Expr::Neg(op) => {
-                let op = fold_arg(op);
+                let op = fold_arg(*op);
                 neg_instrs(op, dst)
             }
             Expr::Add(op1, op2) => {
-                let op1 = fold_arg(op1);
-                let op2 = fold_arg(op2);
+                let op1 = fold_arg(*op1);
+                let op2 = fold_arg(*op2);
                 add_instrs(op1, op2, dst)
             }
         }
@@ -95,7 +95,7 @@ fn fold_stmt(stmt: Stmt) -> Vec<pxir::Instr> {
     match stmt {
         Stmt::Assign(dst_sym, expr) => {
             let dst = pxir::Arg::var(&dst_sym.value);
-            assign::expr_instrs(expr, dst)
+            assign::expr_instrs(*expr, dst)
         }
     }
 }
@@ -110,7 +110,7 @@ fn fold_tail(tail: Tail, conclusion_label: &str) -> Vec<pxir::Instr> {
             instrs
         }
         Tail::Ret(expr) => {
-            let mut instrs = assign::expr_instrs(expr, pxir::Arg::reg(pxir::Register::Rax));
+            let mut instrs = assign::expr_instrs(*expr, pxir::Arg::reg(pxir::Register::Rax));
             instrs.push(pxir::Instr::jumpq(conclusion_label));
             instrs
         }

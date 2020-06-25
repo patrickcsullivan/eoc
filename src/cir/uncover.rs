@@ -60,7 +60,7 @@ mod tests {
             tails
         };
         let program = Program {
-            info: Info::new(),
+            info: Info::default(),
             tails,
         };
         let program = fold_program(program);
@@ -91,7 +91,7 @@ mod tests {
             tails
         };
         let program = Program {
-            info: Info::new(),
+            info: Info::default(),
             tails,
         };
         let program = fold_program(program);

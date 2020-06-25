@@ -11,9 +11,9 @@ pub struct ExprUniquifier {
 }
 
 impl ExprUniquifier {
-    pub fn new() -> ExprUniquifier {
+    pub fn new(counter: u64) -> ExprUniquifier {
         ExprUniquifier {
-            counter: 12345,
+            counter,
             sym_table: HashMap::new(),
         }
     }
@@ -65,7 +65,7 @@ pub struct ProgramUniquifier {}
 
 impl ProgramFolder for ProgramUniquifier {
     fn fold(&mut self, p: Program) -> Program {
-        let mut ctx = ExprUniquifier::new();
+        let mut ctx = ExprUniquifier::new(12345);
         Program::new(ctx.fold(p.expr))
     }
 }
@@ -103,7 +103,7 @@ mod tests {
                 ),
             ),
         );
-        let mut ctx = ExprUniquifier::new();
+        let mut ctx = ExprUniquifier::new(12345);
         let actual = ctx.fold(expr);
         assert_eq!(actual, expected);
     }
@@ -112,7 +112,7 @@ mod tests {
     fn no_vars() {
         let expr = Expr::add(Expr::int(52), Expr::neg(Expr::int(10)));
         let expected = expr.clone();
-        let mut ctx = ExprUniquifier::new();
+        let mut ctx = ExprUniquifier::new(12345);
         let actual = ctx.fold(expr);
         assert_eq!(actual, expected);
     }
