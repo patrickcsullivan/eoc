@@ -2,13 +2,14 @@
 
 pub mod assign_homes;
 pub mod patch;
+pub mod uncover_live;
 mod write;
 
 pub use write::write_block;
 
 use std::collections::HashMap;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Register {
     Rsp,
     Rbp,
@@ -41,7 +42,7 @@ impl Symbol {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Arg {
     Int(i64),
     Reg(Register),
